@@ -77,16 +77,17 @@
 </head>
 <body>
   <header class="wrap">
-    <div class="topbar">
-      <div class="brand">DC Notes</div>
-      <div class="search">
-        <input id="q" placeholder="Search: title / artist / writer / tags / issue…" />
-      </div>
-      <div class="authbar" id="authbar">
-        <span id="auth-status">Guest</span>
-        <button class="btn ghost" id="btn-login">Log in</button>
-        <button class="btn ghost" id="btn-logout" style="display:none">Log out</button>
-      </div>
+    <div class="authbar" id="authbar">
+  <span id="auth-status">Гость</span>
+  <form id="auth-form" style="display:flex;gap:6px; align-items:center;">
+    <input id="auth-email" type="email" placeholder="email" style="width:160px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
+    <input id="auth-pass" type="password" placeholder="пароль" style="width:120px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
+    <button type="submit" class="btn ghost" id="btn-auth">Sign in</button>
+    <button type="button" class="btn ghost" id="btn-signup">Sign up</button>
+    <button type="button" class="btn ghost" id="btn-reset">Reset</button>
+    <button type="button" class="btn ghost" id="btn-logout" style="display:none">Log out</button>
+  </form>
+</div>
     </div>
     <div class="filters" id="filters"></div>
   </header>
@@ -123,6 +124,7 @@
 
     async function init(){
       supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+wireAuthForm();
 
       const { data: { session: s } } = await supabase.auth.getSession();
       session = s;
@@ -166,14 +168,101 @@
       document.getElementById('fab').style.display = canEdit ? '' : 'none';
     }
 
-    async function loginFlow(){
-      // Вход по email (magic-link/OTP)
-      const email = prompt("Email to log in (you'll get a code/magic link):", CONFIG.OWNER_EMAIL);
-      if (!email) return;
-      const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href } });
-      if (error) alert("Sign-in error: " + error.message);
-      else alert("Check your email for the code or magic link, then return here.");
-    }
+    async function refreshAuthUI(){
+  const authStatus = document.getElementById('auth-status');
+  const btnLogout = document.getElementById('btn-logout');
+  const form = document.getElementById('auth-form');
+  const emailInput = document.getElementById('auth-email');
+  const passInput = document.getElementById('auth-pass');
+
+  const { data: { session: s } } = await supabase.auth.getSession();
+  session = s;
+
+  if (session?.user){
+    authStatus.textContent = session.user.email;
+    btnLogout.style.display = '';
+    // прячем поля при залогиненном пользователе
+    emailInput.style.display = passInput.style.display = 'none';
+    document.getElementById('btn-auth').style.display = 'none';
+    document.getElementById('btn-signup').style.display = 'none';
+    document.getElementById('btn-reset').style.display = 'none';
+    canEdit = (session.user.email === CONFIG.OWNER_EMAIL);
+  } else {
+    authStatus.textContent = 'Гость';
+    btnLogout.style.display = 'none';
+    emailInput.style.display = passInput.style.display = '';
+    document.getElementById('btn-auth').style.display = '';
+    document.getElementById('btn-signup').style.display = '';
+    document.getElementById('btn-reset').style.display = '';
+    canEdit = false;
+  }
+  document.body.classList.toggle('editing', false);
+  document.getElementById('fab').style.display = canEdit ? '' : 'none';
+}
+
+// заменяем прошлую magic-link логику:
+async function signInPassword(email, password){
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+async function signUpPassword(email, password){
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+async function resetPassword(email){
+  // отправит письмо для смены пароля (работает, если Site URL настроен)
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: location.href
+  });
+  if (error) throw error;
+}
+
+function wireAuthForm(){
+  const form = document.getElementById('auth-form');
+  const email = document.getElementById('auth-email');
+  const pass = document.getElementById('auth-pass');
+  const btnAuth = document.getElementById('btn-auth');
+  const btnSignup = document.getElementById('btn-signup');
+  const btnReset = document.getElementById('btn-reset');
+  const btnLogout = document.getElementById('btn-logout');
+
+  form.addEventListener('submit', async (e)=>{ // Sign in
+    e.preventDefault();
+    try{
+      await signInPassword(email.value.trim(), pass.value);
+      toast('Вход выполнен');
+      await refreshAuthUI(); await loadFeed();
+    } catch(err){ alert('Ошибка входа: ' + err.message); }
+  });
+
+  btnSignup.addEventListener('click', async ()=>{
+    try{
+      if (!email.value || !pass.value) return alert('Укажи email и пароль');
+      await signUpPassword(email.value.trim(), pass.value);
+      toast('Аккаунт создан, ты вошёл.');
+      await refreshAuthUI(); await loadFeed();
+    } catch(err){ alert('Ошибка регистрации: ' + err.message); }
+  });
+
+  btnReset.addEventListener('click', async ()=>{
+    try{
+      if (!email.value) return alert('Введи email');
+      await resetPassword(email.value.trim());
+      alert('Отправили письмо для смены пароля.');
+    } catch(err){ alert('Ошибка: ' + err.message); }
+  });
+
+  btnLogout.addEventListener('click', async ()=>{
+    await supabase.auth.signOut();
+    toast('Выход выполнен');
+    await refreshAuthUI(); await loadFeed();
+  });
+}
+
 
     /*************** Data: Feed ***************/
     async function loadFeed(){
