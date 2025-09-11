@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DC — Comic Notes</title>
+  <style>
+    :root{
+      --bg:#0b0b0c; --card:#121215; --ink:#eaeaf0; --muted:#9aa0a6;
+      --accent:#6ea8fe; --accent-2:#9b87f5;
+      --radius:14px; --gap:14px; --shadow:0 8px 24px rgba(0,0,0,.35);
+      --touch:16px; --maxw:880px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:var(--accent)}
+    .wrap{max-width:var(--maxw);margin:0 auto;padding:calc(var(--gap)*1.2)}
+    header{position:sticky;top:0;background:linear-gradient(180deg,var(--bg),rgba(11,11,12,.86) 60%,rgba(11,11,12,0));
+      backdrop-filter:saturate(1.2) blur(6px); z-index:50}
+    .topbar{display:flex;gap:10px;align-items:center}
+    .brand{font-weight:700;letter-spacing:.5px}
+    .search{flex:1;display:flex;gap:8px}
+    .search input{
+      width:100%;padding:12px 14px;border-radius:999px;border:1px solid #202127;background:#0f0f12;color:var(--ink)
+    }
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .chip{padding:6px 10px;border-radius:999px;background:#1a1b20;border:1px solid #2a2b31;color:var(--muted);cursor:pointer}
+    .chip.active{color:#e9edff;border-color:var(--accent-2)}
+    main{display:grid;gap:var(--gap);margin-top:var(--gap)}
+    .card{display:grid;grid-template-columns:80px 1fr;gap:12px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
+    .thumb{
+      width:100%;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#0f0f12;display:flex;align-items:center;justify-content:center;
+      border:1px solid #24252b; cursor:pointer
+    }
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .meta{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .line1{display:flex; gap:8px; align-items:center; min-width:0}
+    .issue{font-weight:700;white-space:nowrap}
+    .title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .series{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+    .tag{font-size:.85rem;padding:3px 8px;border-radius:999px;background:#1c1d23;color:#c7cbe0;border:1px solid #2a2d39;cursor:pointer}
+    .actions{margin-left:auto}
+    .dotmenu{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer}
+    .empty{color:var(--muted);text-align:center;padding:32px}
+
+    .page{background:var(--card);padding:16px;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .row{display:grid;gap:10px;margin-bottom:12px}
+    .row.cols{grid-template-columns:1fr 1fr}
+    label{font-size:.9rem;color:#b9bfd3}
+    input[type="text"], input[type="number"], textarea{
+      width:100%;padding:12px 12px;border-radius:10px;border:1px solid #22242b;background:#0f1014;color:var(--ink)
+    }
+    textarea{min-height:110px;resize:vertical}
+    .grid-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+    .imgcell{position:relative;border:1px solid #272a33;border-radius:10px;overflow:hidden;background:#0f0f12}
+    .imgcell img{width:100%;height:140px;object-fit:cover;display:block;cursor:pointer}
+    .imgcell button{position:absolute;top:6px;right:6px;border:0;border-radius:8px;padding:6px 8px;background:rgba(0,0,0,.6);color:#fff;cursor:pointer}
+    .row .help{font-size:.85rem;color:var(--muted)}
+    .btns{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{padding:11px 14px;border-radius:10px;border:1px solid #2a2d36;background:#171820;color:#e9edff;cursor:pointer}
+    .btn.primary{border-color:#3556ff;background:linear-gradient(180deg,#3b5bff,#2f48c9)}
+    .btn.warn{border-color:#48252a;background:linear-gradient(180deg,#7a2d36,#63222a)}
+    .btn.ghost{background:transparent}
+    .fab{position:fixed;right:16px;bottom:16px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(180deg,#7aa2ff,#8f7aff); border:0;color:white;font-size:28px;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer;z-index:40}
+    body.editing .fab{display:none}
+
+    .viewer{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:60}
+    .viewer.active{display:flex}
+    .viewer img{max-width:96vw;max-height:92vh;display:block;border-radius:12px}
+
+    .authbar{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem}
+
+    @media (max-width:560px){ .card{grid-template-columns:64px 1fr} }
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <div class="topbar">
+      <div class="brand">DC Notes</div>
+      <div class="search">
+        <input id="q" placeholder="Search: title / artist / writer / tags / issue…" />
+      </div>
+      <div class="authbar" id="authbar">
+        <span id="auth-status">Guest</span>
+        <button class="btn ghost" id="btn-login">Log in</button>
+        <button class="btn ghost" id="btn-logout" style="display:none">Log out</button>
+      </div>
+    </div>
+    <div class="filters" id="filters"></div>
+  </header>
+
+  <main class="wrap" id="feed"></main>
+  <button class="fab" id="fab">+</button>
+
+  <div class="wrap" id="detail" style="display:none"></div>
+
+  <div class="viewer" id="viewer" title="Tap to close"><img alt=""></div>
+
+  <script type="module">
+    /**************** CONFIG (значения подставь свои) ****************/
+    const CONFIG = {
+      SUPABASE_URL: "https://cirfsglvfhdznbccqzcc.supabase.co",
+      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpcmZzZ2x2Zmhkem5iY2NxemNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzUzOTgsImV4cCI6MjA3MzE1MTM5OH0.Bhzo0H_BJqoVF4DfhTSv1CzIYTDavIu01CuCbSlsfqk",
+      OWNER_EMAIL: "katrineord@gmail.com", // только этот email может редактировать
+      CLOUDINARY_CLOUD_NAME: "dm3zv8da4",
+      CLOUDINARY_UNSIGNED_PRESET: "DC-comics",
+      CLOUDINARY_FOLDER: "dc"
+    };
+
+    
+    /*************** Supabase (легковесная загрузка SDK) ***************/
+    const sbScript = document.createElement('script');
+    sbScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
+    document.head.appendChild(sbScript);
+    sbScript.addEventListener('load', init);
+
+    /***************** State *****************/
+    let supabase, session = null, canEdit = false;
+    let allNotes = [];          // кэш для клиентского поиска/фильтра
+    let activeTag = null;
+
+    async function init(){
+      supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+      const { data: { session: s } } = await supabase.auth.getSession();
+      session = s;
+      await refreshAuthUI();
+
+      supabase.auth.onAuthStateChange(async (_event, newSession) => {
+        session = newSession;
+        await refreshAuthUI();
+        await loadFeed();
+      });
+
+      // Поиск, плюс, вьюер, логин/логаут
+      document.getElementById('q').addEventListener('input', filterFeed);
+      document.getElementById('fab').addEventListener('click', () => openForm());
+      document.getElementById('viewer').addEventListener('click', () => viewer(false));
+      document.getElementById('btn-login').addEventListener('click', loginFlow);
+      document.getElementById('btn-logout').addEventListener('click', async () => {
+        await supabase.auth.signOut(); location.hash = '';
+      });
+
+      await loadFeed();
+    }
+
+    async function refreshAuthUI(){
+      const authStatus = document.getElementById('auth-status');
+      const btnLogin = document.getElementById('btn-login');
+      const btnLogout = document.getElementById('btn-logout');
+
+      if (session?.user){
+        authStatus.textContent = session.user.email;
+        btnLogin.style.display = 'none';
+        btnLogout.style.display = '';
+        canEdit = (session.user.email === CONFIG.OWNER_EMAIL);
+      } else {
+        authStatus.textContent = 'Guest';
+        btnLogin.style.display = '';
+        btnLogout.style.display = 'none';
+        canEdit = false;
+      }
+      document.body.classList.toggle('editing', false);
+      document.getElementById('fab').style.display = canEdit ? '' : 'none';
+    }
+
+    async function loginFlow(){
+      // Вход по email (magic-link/OTP)
+      const email = prompt("Email to log in (you'll get a code/magic link):", CONFIG.OWNER_EMAIL);
+      if (!email) return;
+      const { error } = await supabase.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.href } });
+      if (error) alert("Sign-in error: " + error.message);
+      else alert("Check your email for the code or magic link, then return here.");
+    }
+
+    /*************** Data: Feed ***************/
+    async function loadFeed(){
+      // Грузим все, сортируем по issue (возрастание)
+      const { data, error } = await supabase
+        .from('notes')
+        .select('*')
+        .order('issue', { ascending: true });
+
+      if (error){ console.error(error); return; }
+      allNotes = data || [];
+      renderFeed(allNotes);
+      renderFilterChips(allNotes);
+    }
+
+    function renderFeed(list){
+      const feed = document.getElementById('feed');
+      feed.innerHTML = '';
+      if (!list.length){
+        feed.innerHTML = `<div class="empty">Nothing here yet. Tap “+” to add your first issue.</div>`;
+        return;
+      }
+      for (const n of list){
+        const firstImg = (n.images && n.images.length) ? n.images[0] : null;
+
+        const el = document.createElement('div');
+        el.className = 'card';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        if (firstImg){
+          const img = document.createElement('img');
+          img.src = thumbUrl(firstImg);
+          img.alt = n.title || ('#'+n.issue);
+          img.addEventListener('click', (e)=>{ e.stopPropagation(); viewer(true, firstImg); });
+          thumb.appendChild(img);
+        } // иначе — без заглушки
+        el.appendChild(thumb);
+
+        const meta = document.createElement('div'); meta.className = 'meta';
+        const top = document.createElement('div'); top.className = 'line1';
+
+        const issue = document.createElement('div'); issue.className = 'issue'; issue.textContent = `#${n.issue}`; top.appendChild(issue);
+        const title = document.createElement('div'); title.className = 'title'; title.textContent = n.title || 'Untitled'; top.appendChild(title);
+
+        const yr = document.createElement('div'); yr.className = 'series';
+        yr.textContent = [n.writer, n.artist, n.year?.toString()].filter(Boolean).join(' • ');
+        top.appendChild(yr);
+
+        if (canEdit){
+          const actions = document.createElement('div'); actions.className = 'actions';
+          const btn = document.createElement('button'); btn.className = 'dotmenu'; btn.title = 'Edit'; btn.textContent = '⋯';
+          btn.addEventListener('click', (e)=>{ e.stopPropagation(); openForm(n); });
+          actions.appendChild(btn); top.appendChild(actions);
+        }
+
+        meta.appendChild(top);
+
+        if (n.tags?.length){
+          const tags = document.createElement('div'); tags.className = 'tags';
+          n.tags.forEach(t=>{
+            const chip = document.createElement('span'); chip.className = 'tag'; chip.textContent = t;
+            chip.addEventListener('click', (e)=>{ e.stopPropagation(); toggleTagFilter(t); });
+            tags.appendChild(chip);
+          });
+          meta.appendChild(tags);
+        }
+
+        el.addEventListener('click', ()=> openDetail(n));
+        feed.appendChild(el);
+      }
+    }
+
+    function renderFilterChips(list){
+      const f = document.getElementById('filters');
+      const allTags = new Set();
+      for (const n of list){ (n.tags||[]).forEach(t=> allTags.add(t)); }
+      f.innerHTML = '';
+      if (!allTags.size) return;
+      const reset = document.createElement('div');
+      reset.className = 'chip' + (activeTag? '' : ' active');
+      reset.textContent = 'All';
+      reset.addEventListener('click', ()=>{ activeTag=null; filterFeed(); });
+      f.appendChild(reset);
+
+      [...allTags].sort((a,b)=>a.localeCompare(b)).forEach(t=>{
+        const el = document.createElement('div');
+        el.className = 'chip' + (activeTag===t ? ' active' : '');
+        el.textContent = t;
+        el.addEventListener('click', ()=>{ activeTag=t; filterFeed(); });
+        f.appendChild(el);
+      });
+    }
+
+    function filterFeed(){
+      const q = document.getElementById('q').value.trim().toLowerCase();
+      let filtered = allNotes;
+
+      if (q){
+        filtered = filtered.filter(n=>{
+          const hay = [
+            n.title, n.artist, n.writer,
+            (n.tags||[]).join(' '),
+            String(n.issue||'')
+          ].filter(Boolean).join(' ').toLowerCase();
+          return hay.includes(q);
+        });
+      }
+      if (activeTag){
+        filtered = filtered.filter(n=> (n.tags||[]).includes(activeTag));
+      }
+      renderFeed(filtered);
+    }
+
+    function toggleTagFilter(tag){
+      activeTag = (activeTag === tag) ? null : tag;
+      filterFeed();
+    }
+
+    /*************** Detail (readonly) ***************/
+    function openDetail(n){
+      location.hash = 'detail';
+      const box = document.getElementById('detail');
+      box.style.display = '';
+      document.getElementById('feed').style.display = 'none';
+
+      box.innerHTML = '';
+      const page = document.createElement('div');
+      page.className = 'page';
+
+      page.innerHTML = `
+        <div class="row cols">
+          <div><label>Issue</label><div>#${n.issue}</div></div>
+          <div><label>Year</label><div>${n.year ?? '—'}</div></div>
+        </div>
+        <div class="row cols">
+          <div><label>Title</label><div>${escapeHtml(n.title||'—')}</div></div>
+          <div><label>Artist / Writer</label><div>${[n.artist, n.writer].filter(Boolean).join(' / ') || '—'}</div></div>
+        </div>
+        <div class="row">
+          <label>Summary</label>
+          <div>${n.summary ? nl2br(escapeHtml(n.summary)) : '—'}</div>
+        </div>
+        <div class="row">
+          <label>Tags</label>
+          <div>${n.tags?.length ? n.tags.map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join(' ') : '—'}</div>
+        </div>
+        <div class="row cols">
+          <div><label>Link A</label><div>${n.link_a ? `<a href="${n.link_a}" target="_blank" rel="noopener">Link A</a>` : '—'}</div></div>
+          <div><label>Link B</label><div>${n.link_b ? `<a href="${n.link_b}" target="_blank" rel="noopener">Link B</a>` : '—'}</div></div>
+        </div>
+      `;
+
+      // Изображения (по тапу — полноэкранный просмотр)
+      const imgs = document.createElement('div'); imgs.className = 'row'; imgs.innerHTML = `<label>Images</label>`;
+      const grid = document.createElement('div'); grid.className = 'grid-imgs';
+      (n.images||[]).forEach(url=>{
+        const cell = document.createElement('div'); cell.className='imgcell';
+        const im = document.createElement('img'); im.src = thumbUrl(url); im.alt='';
+        im.addEventListener('click', ()=> viewer(true, url));
+        cell.appendChild(im); grid.appendChild(cell);
+      });
+      if ((n.images||[]).length) imgs.appendChild(grid);
+      else imgs.innerHTML += `<div class="help">—</div>`;
+      page.appendChild(imgs);
+
+      const btns = document.createElement('div'); btns.className = 'btns';
+      btns.innerHTML = `<button class="btn" id="back">← Back</button>`;
+      if (canEdit) btns.innerHTML += `<button class="btn primary" id="edit">Edit</button>`;
+      page.appendChild(btns);
+
+      box.appendChild(page);
+
+      document.getElementById('back').onclick = ()=>{ box.style.display='none'; document.getElementById('feed').style.display=''; location.hash=''; };
+      if (canEdit) document.getElementById('edit').onclick = ()=> openForm(n);
+    }
+
+    /*************** Form (create/edit) ***************/
+    function openForm(n=null){
+      document.body.classList.toggle('editing', true);
+      const box = document.getElementById('detail');
+      box.style.display = '';
+      document.getElementById('feed').style.display = 'none';
+      location.hash = 'edit';
+
+      const isEdit = !!(n && n.id);
+
+      box.innerHTML = '';
+      const page = document.createElement('div'); page.className = 'page';
+
+      page.innerHTML = `
+        <div class="row cols">
+          <div>
+            <label>Issue *</label>
+            <input id="f-issue" type="number" min="0" placeholder="e.g. 1" value="${n?.issue ?? ''}">
+          </div>
+          <div>
+            <label>Year</label>
+            <input id="f-year" type="number" placeholder="e.g. 2016" value="${n?.year ?? ''}">
+          </div>
+        </div>
+
+        <div class="row cols">
+          <div>
+            <label>Title</label>
+            <input id="f-title" type="text" placeholder="Title" value="${escapeAttr(n?.title||'')}">
+          </div>
+          <div>
+            <label>Artist / Writer</label>
+            <input id="f-people" type="text" placeholder="artist; writer" value="${escapeAttr([n?.artist||'', n?.writer||''].filter(Boolean).join('; '))}">
+            <div class="help">Через «;»: сначала artist, потом writer (можно оставить пустым)</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Summary</label>
+          <textarea id="f-summary" placeholder="Short summary…">${escapeHtml(n?.summary||'')}</textarea>
+        </div>
+
+        <div class="row">
+          <label>Tags</label>
+          <input id="f-tags" type="text" placeholder="comma-separated: gotham, batfamily" value="${escapeAttr((n?.tags||[]).join(', '))}">
+        </div>
+
+        <div class="row cols">
+          <div>
+            <label>Link A</label>
+            <input id="f-linka" type="text" placeholder="https://…" value="${escapeAttr(n?.link_a||'')}">
+          </div>
+          <div>
+            <label>Link B</label>
+            <input id="f-linkb" type="text" placeholder="https://…" value="${escapeAttr(n?.link_b||'')}">
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Images</label>
+          <div class="btns" style="margin-bottom:8px">
+            <button class="btn" id="btn-add-url">Add URL</button>
+            <button class="btn" id="btn-upload">Upload file</button>
+          </div>
+          <div class="grid-imgs" id="img-grid"></div>
+        </div>
+
+        <div class="btns">
+          <button class="btn" id="cancel">Cancel</button>
+          ${isEdit ? `<button class="btn warn" id="delete">Delete</button>` : ''}
+          <button class="btn primary" id="save">${isEdit ? 'Save' : 'Add'}</button>
+        </div>
+      `;
+
+      // Локальный массив картинок
+      const images = [...(n?.images||[])];
+      const grid = page.querySelector('#img-grid');
+      function refreshImages(){
+        grid.innerHTML = '';
+        images.forEach((url, idx)=>{
+          const cell = document.createElement('div'); cell.className='imgcell';
+          const im = document.createElement('img'); im.src = thumbUrl(url); im.alt='';
+          im.addEventListener('click', ()=> viewer(true, url));
+          const rm = document.createElement('button'); rm.textContent='×'; rm.title='Remove';
+          rm.onclick = ()=>{ images.splice(idx,1); refreshImages(); };
+          cell.appendChild(im); cell.appendChild(rm); grid.appendChild(cell);
+        });
+      }
+      refreshImages();
+
+      // Кнопки формы
+      page.querySelector('#cancel').onclick = ()=> { document.body.classList.remove('editing'); document.getElementById('detail').style.display='none'; document.getElementById('feed').style.display=''; location.hash=''; };
+      if (n?.id){
+        page.querySelector('#delete').onclick = async ()=>{
+          if (!confirm('Delete this note?')) return;
+          const { error } = await supabase.from('notes').delete().eq('id', n.id);
+          if (error) return alert(error.message);
+          toast('Deleted.'); await loadFeed();
+          document.body.classList.remove('editing'); document.getElementById('detail').style.display='none'; document.getElementById('feed').style.display='';
+        };
+      }
+      page.querySelector('#save').onclick = async ()=>{
+        const issue = parseInt(page.querySelector('#f-issue').value,10);
+        if (!(issue>=0)) return alert('Issue is required (integer).');
+
+        const yearVal = page.querySelector('#f-year').value.trim();
+        const year = yearVal ? parseInt(yearVal,10) : null;
+
+        const title = valOrNull('#f-title', page);
+        const people = (page.querySelector('#f-people').value || '').split(';').map(s=>s.trim()).filter(Boolean);
+        const artist = people[0] || null;
+        const writer = people[1] || null;
+        const summary = valOrNull('#f-summary', page);
+
+        const tagsRaw = page.querySelector('#f-tags').value || '';
+        const tags = tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
+        const link_a = valOrNull('#f-linka', page);
+        const link_b = valOrNull('#f-linkb', page);
+
+        const payload = { issue, year, title, artist, writer, summary, tags, link_a, link_b, images };
+
+        let error;
+        if (n?.id){
+          ({ error } = await supabase.from('notes').update(payload).eq('id', n.id));
+        } else {
+          const uid = session?.user?.id || null;
+          ({ error } = await supabase.from('notes').insert({ ...payload, user_id: uid }));
+        }
+        if (error) return alert(error.message);
+        toast('Saved.');
+        await loadFeed();
+        document.body.classList.remove('editing'); document.getElementById('detail').style.display='none'; document.getElementById('feed').style.display='';
+      };
+
+      // Добавить URL
+      page.querySelector('#btn-add-url').onclick = ()=>{
+        const url = prompt('Paste image URL (Cloudinary or direct):');
+        if (!url) return;
+        images.push(url.trim()); refreshImages();
+      };
+
+      // Загрузка файла → Cloudinary unsigned
+      page.querySelector('#btn-upload').onclick = async ()=>{
+        const fi = document.createElement('input'); fi.type='file'; fi.accept="image/*"; fi.multiple=true;
+        fi.onchange = async ()=>{
+          if (!fi.files?.length) return;
+          for (const file of fi.files){
+            const form = new FormData();
+            form.append('file', file);
+            form.append('upload_preset', CONFIG.CLOUDINARY_UNSIGNED_PRESET);
+            if (CONFIG.CLOUDINARY_FOLDER) form.append('folder', CONFIG.CLOUDINARY_FOLDER);
+            try{
+              const res = await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD_NAME}/upload`, { method:'POST', body:form });
+              const json = await res.json();
+              if (json.secure_url) { images.push(json.secure_url); refreshImages(); }
+              else { console.error(json); alert('Upload failed: ' + (json.error?.message || '')); }
+            } catch(e){ console.error(e); alert('Network error during upload'); }
+          }
+        };
+        fi.click();
+      };
+
+      document.getElementById('detail').appendChild(page);
+    }
+
+    function valOrNull(sel, root=document){ const v=root.querySelector(sel)?.value.trim(); return v? v:null; }
+
+    /*************** Image viewer ***************/
+    function viewer(show, url=''){
+      const v = document.getElementById('viewer');
+      const im = v.querySelector('img');
+      if (show){ im.src = url; v.classList.add('active'); }
+      else { im.src=''; v.classList.remove('active'); }
+    }
+    function thumbUrl(url){ return url; } // сюда можно добавить трансформации Cloudinary
+
+    /*************** Utils ***************/
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
+    function escapeAttr(s){ return escapeHtml(s); }
+    function nl2br(s){ return s.replace(/\n/g,'<br>'); }
+
+    // Маленький тост (5 сек)
+    let toastTimer;
+    function toast(msg){
+      let el = document.getElementById('toast');
+      if (!el){
+        el = document.createElement('div'); el.id='toast';
+        el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 14px;border-radius:10px;background:rgba(0,0,0,.8);color:#fff;z-index:100';
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.style.display = '';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> el.style.display='none', 5000);
+    }
+  </script>
+</body>
+</html>
