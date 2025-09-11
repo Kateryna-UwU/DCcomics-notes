@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -15,8 +15,7 @@
     html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
     a{color:var(--accent)}
     .wrap{max-width:var(--maxw);margin:0 auto;padding:calc(var(--gap)*1.2)}
-    header{position:sticky;top:0;background:linear-gradient(180deg,var(--bg),rgba(11,11,12,.86) 60%,rgba(11,11,12,0));
-      backdrop-filter:saturate(1.2) blur(6px); z-index:50}
+    header{position:sticky;top:0;background:linear-gradient(180deg,var(--bg),rgba(11,11,12,.86) 60%,rgba(11,11,12,0)); backdrop-filter:saturate(1.2) blur(6px); z-index:50}
     .topbar{display:flex;gap:10px;align-items:center}
     .brand{font-weight:700;letter-spacing:.5px}
     .search{flex:1;display:flex;gap:8px}
@@ -24,7 +23,12 @@
     .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .chip{padding:6px 10px;border-radius:999px;background:#1a1b20;border:1px solid #2a2b31;color:var(--muted);cursor:pointer}
     .chip.active{color:#e9edff;border-color:var(--accent-2)}
+    .viewbar{display:flex;gap:10px;align-items:center;margin-top:8px}
+    .select{padding:8px 10px;border-radius:10px;border:1px solid #2a2d36;background:#171820;color:#e9edff}
+
     main{display:grid;gap:var(--gap);margin-top:var(--gap)}
+    .section{margin-top:6px}
+    .section h3{margin:14px 0 8px 4px;font-size:1rem;color:#cfd3e6}
     .card{display:grid;grid-template-columns:80px 1fr;gap:12px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
     .thumb{width:100%;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#0f0f12;display:flex;align-items:center;justify-content:center;border:1px solid #24252b; cursor:pointer}
     .thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -32,11 +36,16 @@
     .line1{display:flex; gap:8px; align-items:center; min-width:0}
     .issue{font-weight:700;white-space:nowrap}
     .title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .series{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .seriesline{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
     .tag{font-size:.85rem;padding:3px 8px;border-radius:999px;background:#1c1d23;color:#c7cbe0;border:1px solid #2a2d39;cursor:pointer}
-    .actions{margin-left:auto}
+    .actions{margin-left:auto;position:relative}
     .dotmenu{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer}
+    .menu{position:absolute;right:0;top:26px;background:#14151a;border:1px solid #2a2d36;border-radius:10px;min-width:180px;display:none;box-shadow:var(--shadow)}
+    .menu.open{display:block}
+    .menu a, .menu button{display:block;width:100%;text-align:left;background:transparent;border:0;color:#eaeaf0;padding:10px 12px;cursor:pointer}
+    .menu .muted{color:#9aa0a6}
+
     .empty{color:var(--muted);text-align:center;padding:32px}
 
     .page{background:var(--card);padding:16px;border-radius:var(--radius);box-shadow:var(--shadow)}
@@ -66,6 +75,7 @@
     .viewer img{max-width:96vw;max-height:92vh;display:block;border-radius:12px}
 
     .authbar{display:flex;align-items:center;gap:10px;color:#b9bfd3;font-size:.9rem}
+    .backlink{display:inline-flex;align-items:center;gap:6px;margin-bottom:8px;cursor:pointer;color:#eaeaf0}
 
     @media (max-width:560px){ .card{grid-template-columns:64px 1fr} }
   </style>
@@ -74,20 +84,41 @@
   <header class="wrap">
     <div class="topbar">
       <div class="brand">DC Notes</div>
-      <div class="search"><input id="q" placeholder="Поиск: title / artist / writer / tag / issue"></div>
 
+      <div class="search">
+        <input id="q" placeholder="Search: series / issue / artist / writer / tag">
+      </div>
+
+      <!-- tiny sorting/view switcher -->
+      <select id="view-mode" class="select" title="View mode">
+        <option value="issue">By Issue</option>
+        <option value="title">By Series A→Z</option>
+        <option value="group">Grouped by Series</option>
+      </select>
+
+      <!-- auth + overflow menu -->
       <div class="authbar" id="authbar">
-        <span id="auth-status">Гость</span>
+        <span id="auth-status">Guest</span>
+
         <form id="auth-form" style="display:flex;gap:6px; align-items:center;">
           <input id="auth-email" type="email" placeholder="email" style="width:160px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
-          <input id="auth-pass" type="password" placeholder="пароль" style="width:120px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
+          <input id="auth-pass" type="password" placeholder="password" style="width:120px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
           <button type="submit" class="btn ghost" id="btn-auth">Sign in</button>
           <button type="button" class="btn ghost" id="btn-signup">Sign up</button>
           <button type="button" class="btn ghost" id="btn-reset">Reset</button>
           <button type="button" class="btn ghost" id="btn-logout" style="display:none">Log out</button>
         </form>
+
+        <div class="actions" style="position:relative">
+          <button class="dotmenu" id="btn-more" title="More">⋯</button>
+          <div class="menu" id="more-menu">
+            <div class="muted" id="menu-email" style="padding:10px 12px">—</div>
+            <button id="menu-logout">Log out</button>
+          </div>
+        </div>
       </div>
     </div>
+
     <div class="filters" id="filters"></div>
   </header>
 
@@ -99,17 +130,17 @@
   <div class="viewer" id="viewer" title="Tap to close"><img alt=""></div>
 
   <script type="module">
-    /*************** CONFIG — ЗАМЕНИ на свои значения ***************/
+    /**************** CONFIG (replace with yours) ****************/
     const CONFIG = {
-      SUPABASE_URL: "https://cirfsglvfhdznbccqzcc.supabase.co",          // ← твой Project URL
-      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpcmZzZ2x2Zmhkem5iY2NxemNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzUzOTgsImV4cCI6MjA3MzE1MTM5OH0.Bhzo0H_BJqoVF4DfhTSv1CzIYTDavIu01CuCbSlsfqk",               // ← твой anon key
-      OWNER_EMAIL: "katrineord@gmail.com",                            // ← твой email (только он сможет редактировать)
-      CLOUDINARY_CLOUD_NAME: "dm3zv8da4",                  // ← Cloudinary cloud name
-      CLOUDINARY_UNSIGNED_PRESET: "DC-comics",                   // ← имя unsigned пресета
-      CLOUDINARY_FOLDER: "dc"                                    // ← папка (по желанию)
+      SUPABASE_URL: "https://cirfsglvfhdznbccqzcc.supabase.co",
+      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpcmZzZ2x2Zmhkem5iY2NxemNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzUzOTgsImV4cCI6MjA3MzE1MTM5OH0.Bhzo0H_BJqoVF4DfhTSv1CzIYTDavIu01CuCbSlsfqk",
+      OWNER_EMAIL: "katrineord@gmail.com",
+      CLOUDINARY_CLOUD_NAME: "dm3zv8da4",
+      CLOUDINARY_UNSIGNED_PRESET: "DC-comics",
+      CLOUDINARY_FOLDER: "dc"
     };
 
-    /*************** Supabase SDK загрузка ***************/
+    /*************** Supabase SDK ***************/
     const sbScript = document.createElement('script');
     sbScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
     document.head.appendChild(sbScript);
@@ -117,32 +148,58 @@
 
     /***************** State *****************/
     let supabase, session = null, canEdit = false;
-    let allNotes = [];          // кэш для поиска/фильтра
+    let allNotes = [];          // cache for search/filter/grouping
     let activeTag = null;
+    let viewMode = 'issue';     // 'issue' | 'title' | 'group'
+
+    /***************** Router *****************/
+    window.addEventListener('hashchange', handleRoute);
+
+    function routeTo(hash){ location.hash = hash; }
+    function handleRoute(){
+      const h = location.hash || '#/feed';
+      if (h.startsWith('#/detail/')){
+        const id = h.split('/')[2];
+        const n = allNotes.find(x=>x.id===id);
+        if (n) renderDetail(n);
+      } else if (h.startsWith('#/edit/')){
+        const id = h.split('/')[2];
+        const n = id==='new' ? null : allNotes.find(x=>x.id===id);
+        renderForm(n);
+      } else {
+        // feed
+        document.getElementById('detail').style.display='none';
+        document.getElementById('feed').style.display='';
+      }
+    }
 
     async function init(){
       supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
-      wireAuthForm(); // привязываем форму авторизации
+      wireAuthForm(); // bind auth form
+      wireOverflowMenu();
 
-      // начальное состояние сессии
       const { data: { session: s } } = await supabase.auth.getSession();
       session = s;
       await refreshAuthUI();
 
-      // обновление при логине/логауте
       supabase.auth.onAuthStateChange(async (_event, newSession) => {
         session = newSession;
         await refreshAuthUI();
         await loadFeed();
       });
 
-      // UI: поиск, FAB, закрытие вьюера
       document.getElementById('q').addEventListener('input', filterFeed);
-      document.getElementById('fab').addEventListener('click', () => openForm());
+      document.getElementById('fab').addEventListener('click', () => routeTo('#/edit/new'));
       document.getElementById('viewer').addEventListener('click', () => viewer(false));
+      document.getElementById('view-mode').addEventListener('change', (e)=>{
+        viewMode = e.target.value;
+        filterFeed(); // re-render with new mode
+      });
 
       await loadFeed();
+      if (!location.hash) routeTo('#/feed');
+      handleRoute();
     }
 
     async function refreshAuthUI(){
@@ -154,23 +211,26 @@
       const { data: { session: s } } = await supabase.auth.getSession();
       session = s;
 
+      const menuEmail = document.getElementById('menu-email');
+
       if (session?.user){
-        authStatus.textContent = session.user.email;
+        authStatus.textContent = 'Owner';
         btnLogout.style.display = '';
-        // прячем поля при залогиненном пользователе
         emailInput.style.display = passInput.style.display = 'none';
         document.getElementById('btn-auth').style.display = 'none';
         document.getElementById('btn-signup').style.display = 'none';
         document.getElementById('btn-reset').style.display = 'none';
         canEdit = (session.user.email === CONFIG.OWNER_EMAIL);
+        menuEmail.textContent = session.user.email;
       } else {
-        authStatus.textContent = 'Гость';
+        authStatus.textContent = 'Guest';
         btnLogout.style.display = 'none';
         emailInput.style.display = passInput.style.display = '';
         document.getElementById('btn-auth').style.display = '';
         document.getElementById('btn-signup').style.display = '';
         document.getElementById('btn-reset').style.display = '';
         canEdit = false;
+        menuEmail.textContent = '—';
       }
       document.body.classList.toggle('editing', false);
       document.getElementById('fab').style.display = canEdit ? '' : 'none';
@@ -188,7 +248,7 @@
       return data;
     }
     async function resetPassword(email){
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.href });
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
       if (error) throw error;
     }
 
@@ -204,33 +264,47 @@
         e.preventDefault();
         try{
           await signInPassword(email.value.trim(), pass.value);
-          toast('Вход выполнен');
+          toast('Signed in');
           await refreshAuthUI(); await loadFeed();
-        } catch(err){ alert('Ошибка входа: ' + err.message); }
+        } catch(err){ alert('Login error: ' + err.message); }
       });
 
       btnSignup.addEventListener('click', async ()=>{
         try{
-          if (!email.value || !pass.value) return alert('Укажи email и пароль');
+          if (!email.value || !pass.value) return alert('Specify email and password');
           await signUpPassword(email.value.trim(), pass.value);
-          toast('Аккаунт создан, ты вошёл.');
+          toast('Account created.');
           await refreshAuthUI(); await loadFeed();
-        } catch(err){ alert('Ошибка регистрации: ' + err.message); }
+        } catch(err){ alert('Signup error: ' + err.message); }
       });
 
       btnReset.addEventListener('click', async ()=>{
         try{
-          if (!email.value) return alert('Введи email');
+          if (!email.value) return alert('Enter email');
           await resetPassword(email.value.trim());
-          alert('Отправили письмо для смены пароля.');
-        } catch(err){ alert('Ошибка: ' + err.message); }
+          alert('Reset link sent to your email.');
+        } catch(err){ alert('Error: ' + err.message); }
       });
 
       btnLogout.addEventListener('click', async ()=>{
         await supabase.auth.signOut();
-        toast('Выход выполнен');
+        toast('Signed out');
         await refreshAuthUI(); await loadFeed();
       });
+    }
+
+    function wireOverflowMenu(){
+      const btn = document.getElementById('btn-more');
+      const menu = document.getElementById('more-menu');
+      const logout = document.getElementById('menu-logout');
+      btn.addEventListener('click', (e)=>{ e.stopPropagation(); menu.classList.toggle('open'); });
+      logout.addEventListener('click', async ()=>{
+        await supabase.auth.signOut();
+        menu.classList.remove('open');
+        toast('Signed out');
+        await refreshAuthUI(); await loadFeed();
+      });
+      document.addEventListener('click', ()=> menu.classList.remove('open'));
     }
 
     /*************** Data: Feed ***************/
@@ -242,66 +316,95 @@
 
       if (error){ console.error(error); return; }
       allNotes = data || [];
-      renderFeed(allNotes);
+      filterFeed(); // initial render
       renderFilterChips(allNotes);
     }
 
     function renderFeed(list){
       const feed = document.getElementById('feed');
       feed.innerHTML = '';
+
       if (!list.length){
-        feed.innerHTML = `<div class="empty">Пока пусто. Нажми «+», чтобы добавить первый выпуск.</div>`;
+        feed.innerHTML = `<div class="empty">Empty. Tap “+” to add the first issue.</div>`;
         return;
       }
-      for (const n of list){
-        const firstImg = (n.images && n.images.length) ? n.images[0] : null;
 
-        const el = document.createElement('div');
-        el.className = 'card';
-
-        const thumb = document.createElement('div');
-        thumb.className = 'thumb';
-        if (firstImg){
-          const img = document.createElement('img');
-          img.src = thumbUrl(firstImg);
-          img.alt = n.title || ('#'+n.issue);
-          img.addEventListener('click', (e)=>{ e.stopPropagation(); viewer(true, firstImg); });
-          thumb.appendChild(img);
+      if (viewMode === 'group'){
+        // Group by series
+        const groups = new Map();
+        for (const n of list){
+          const key = (n.series||'— No series —');
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(n);
         }
-        el.appendChild(thumb);
-
-        const meta = document.createElement('div'); meta.className = 'meta';
-        const top = document.createElement('div'); top.className = 'line1';
-
-        const issue = document.createElement('div'); issue.className = 'issue'; issue.textContent = `#${n.issue}`; top.appendChild(issue);
-        const title = document.createElement('div'); title.className = 'title'; title.textContent = n.title || 'Untitled'; top.appendChild(title);
-
-        const yr = document.createElement('div'); yr.className = 'series';
-        yr.textContent = [n.writer, n.artist, n.year?.toString()].filter(Boolean).join(' • ');
-        top.appendChild(yr);
-
-        if (canEdit){
-          const actions = document.createElement('div'); actions.className = 'actions';
-          const btn = document.createElement('button'); btn.className = 'dotmenu'; btn.title = 'Edit'; btn.textContent = '⋯';
-          btn.addEventListener('click', (e)=>{ e.stopPropagation(); openForm(n); });
-          actions.appendChild(btn); top.appendChild(actions);
+        // sort groups A→Z
+        const sortedKeys = [...groups.keys()].sort((a,b)=>a.localeCompare(b));
+        for (const key of sortedKeys){
+          const sect = document.createElement('div'); sect.className='section';
+          const h = document.createElement('h3'); h.textContent = key; sect.appendChild(h);
+          const items = groups.get(key).slice().sort((a,b)=> (a.issue||0)-(b.issue||0));
+          items.forEach(n=> sect.appendChild(renderCard(n)));
+          feed.appendChild(sect);
         }
-
-        meta.appendChild(top);
-
-        if (n.tags?.length){
-          const tags = document.createElement('div'); tags.className = 'tags';
-          n.tags.forEach(t=>{
-            const chip = document.createElement('span'); chip.className = 'tag'; chip.textContent = t;
-            chip.addEventListener('click', (e)=>{ e.stopPropagation(); toggleTagFilter(t); });
-            tags.appendChild(chip);
-          });
-          meta.appendChild(tags);
+      } else {
+        // flat list sorts
+        let items = list.slice();
+        if (viewMode === 'title'){
+          items.sort((a,b)=> (a.series||'').localeCompare(b.series||''));
+        } else { // issue
+          items.sort((a,b)=> (a.issue||0)-(b.issue||0));
         }
-
-        el.addEventListener('click', ()=> openDetail(n));
-        feed.appendChild(el);
+        items.forEach(n=> feed.appendChild(renderCard(n)));
       }
+    }
+
+    function renderCard(n){
+      const el = document.createElement('div');
+      el.className = 'card';
+
+      const firstImg = (n.images && n.images.length) ? n.images[0] : null;
+      const thumb = document.createElement('div'); thumb.className = 'thumb';
+      if (firstImg){
+        const img = document.createElement('img');
+        img.src = thumbUrl(firstImg);
+        img.alt = n.series || ('#'+n.issue);
+        img.addEventListener('click', (e)=>{ e.stopPropagation(); viewer(true, firstImg); });
+        thumb.appendChild(img);
+      }
+      el.appendChild(thumb);
+
+      const meta = document.createElement('div'); meta.className = 'meta';
+      const top = document.createElement('div'); top.className = 'line1';
+
+      const issue = document.createElement('div'); issue.className = 'issue'; issue.textContent = `#${n.issue}`; top.appendChild(issue);
+      const title = document.createElement('div'); title.className = 'title'; title.textContent = n.series || 'No series'; top.appendChild(title);
+
+      const yr = document.createElement('div'); yr.className = 'seriesline';
+      const subtitle = [n.title, n.writer, n.artist, n.year?.toString()].filter(Boolean).join(' • ');
+      yr.textContent = subtitle;
+      top.appendChild(yr);
+
+      if (canEdit){
+        const actions = document.createElement('div'); actions.className = 'actions';
+        const btn = document.createElement('button'); btn.className = 'dotmenu'; btn.title = 'Edit'; btn.textContent = '⋯';
+        btn.addEventListener('click', (e)=>{ e.stopPropagation(); routeTo(`#/edit/${n.id}`); });
+        actions.appendChild(btn); top.appendChild(actions);
+      }
+
+      meta.appendChild(top);
+
+      if (n.tags?.length){
+        const tags = document.createElement('div'); tags.className = 'tags';
+        n.tags.forEach(t=>{
+          const chip = document.createElement('span'); chip.className = 'tag'; chip.textContent = t;
+          chip.addEventListener('click', (e)=>{ e.stopPropagation(); toggleTagFilter(t); });
+          tags.appendChild(chip);
+        });
+        meta.appendChild(tags);
+      }
+
+      el.addEventListener('click', ()=> routeTo(`#/detail/${n.id}`));
+      return el;
     }
 
     function renderFilterChips(list){
@@ -312,7 +415,7 @@
       if (!allTags.size) return;
       const reset = document.createElement('div');
       reset.className = 'chip' + (activeTag? '' : ' active');
-      reset.textContent = 'Все';
+      reset.textContent = 'All';
       reset.addEventListener('click', ()=>{ activeTag=null; filterFeed(); });
       f.appendChild(reset);
 
@@ -332,7 +435,7 @@
       if (q){
         filtered = filtered.filter(n=>{
           const hay = [
-            n.title, n.artist, n.writer,
+            n.series, n.title, n.artist, n.writer,
             (n.tags||[]).join(' '),
             String(n.issue||'')
           ].filter(Boolean).join(' ').toLowerCase();
@@ -345,14 +448,8 @@
       renderFeed(filtered);
     }
 
-    function toggleTagFilter(tag){
-      activeTag = (activeTag === tag) ? null : tag;
-      filterFeed();
-    }
-
     /*************** Detail (readonly) ***************/
-    function openDetail(n){
-      location.hash = 'detail';
+    function renderDetail(n){
       const box = document.getElementById('detail');
       box.style.display = '';
       document.getElementById('feed').style.display = 'none';
@@ -361,14 +458,24 @@
       const page = document.createElement('div');
       page.className = 'page';
 
-      page.innerHTML = `
+      const back = document.createElement('div');
+      back.className = 'backlink';
+      back.innerHTML = '← Back';
+      back.onclick = ()=> history.back();
+      page.appendChild(back);
+
+      page.innerHTML += `
         <div class="row cols">
+          <div><label>Series</label><div>${escapeHtml(n.series||'—')}</div></div>
           <div><label>Issue</label><div>#${n.issue}</div></div>
-          <div><label>Year</label><div>${n.year ?? '—'}</div></div>
         </div>
         <div class="row cols">
           <div><label>Title</label><div>${escapeHtml(n.title||'—')}</div></div>
-          <div><label>Artist / Writer</label><div>${[n.artist, n.writer].filter(Boolean).join(' / ') || '—'}</div></div>
+          <div><label>Year</label><div>${n.year ?? '—'}</div></div>
+        </div>
+        <div class="row cols">
+          <div><label>Artist</label><div>${escapeHtml(n.artist||'—')}</div></div>
+          <div><label>Writer</label><div>${escapeHtml(n.writer||'—')}</div></div>
         </div>
         <div class="row">
           <label>Summary</label>
@@ -398,34 +505,48 @@
       page.appendChild(imgs);
 
       const btns = document.createElement('div'); btns.className = 'btns';
-      btns.innerHTML = `<button class="btn" id="back">← Назад</button>`;
       if (canEdit) btns.innerHTML += `<button class="btn primary" id="edit">Edit</button>`;
       page.appendChild(btns);
 
       box.appendChild(page);
 
-      document.getElementById('back').onclick = ()=>{ box.style.display='none'; document.getElementById('feed').style.display=''; location.hash=''; };
-      if (canEdit) document.getElementById('edit').onclick = ()=> openForm(n);
+      if (canEdit) document.getElementById('edit').onclick = ()=> routeTo(`#/edit/${n.id}`);
     }
 
     /*************** Form (create/edit) ***************/
-    function openForm(n=null){
+    function renderForm(n=null){
       document.body.classList.toggle('editing', true);
       const box = document.getElementById('detail');
       box.style.display = '';
       document.getElementById('feed').style.display = 'none';
-      location.hash = 'edit';
 
       const isEdit = !!(n && n.id);
 
       box.innerHTML = '';
       const page = document.createElement('div'); page.className = 'page';
 
-      page.innerHTML = `
+      const back = document.createElement('div');
+      back.className = 'backlink';
+      back.innerHTML = '← Back';
+      back.onclick = ()=> history.back();
+      page.appendChild(back);
+
+      page.innerHTML += `
         <div class="row cols">
+          <div>
+            <label>Series</label>
+            <input id="f-series" type="text" placeholder="e.g. Batman Vol. 5" value="${escapeAttr(n?.series||'')}">
+          </div>
           <div>
             <label>Issue *</label>
             <input id="f-issue" type="number" min="0" placeholder="e.g. 1" value="${n?.issue ?? ''}">
+          </div>
+        </div>
+
+        <div class="row cols">
+          <div>
+            <label>Title</label>
+            <input id="f-title" type="text" placeholder="Issue title (optional)" value="${escapeAttr(n?.title||'')}">
           </div>
           <div>
             <label>Year</label>
@@ -435,13 +556,12 @@
 
         <div class="row cols">
           <div>
-            <label>Title</label>
-            <input id="f-title" type="text" placeholder="Title" value="${escapeAttr(n?.title||'')}">
+            <label>Artist</label>
+            <input id="f-artist" type="text" placeholder="Artist" value="${escapeAttr(n?.artist||'')}">
           </div>
           <div>
-            <label>Artist / Writer</label>
-            <input id="f-people" type="text" placeholder="artist; writer" value="${escapeAttr([n?.artist||'', n?.writer||''].filter(Boolean).join('; '))}">
-            <div class="help">Через «;»: сначала artist, потом writer (можно оставить пустым)</div>
+            <label>Writer</label>
+            <input id="f-writer" type="text" placeholder="Writer" value="${escapeAttr(n?.writer||'')}">
           </div>
         </div>
 
@@ -482,7 +602,6 @@
         </div>
       `;
 
-      // Локальный массив картинок
       const images = [...(n?.images||[])];
       const grid = page.querySelector('#img-grid');
       function refreshImages(){
@@ -498,28 +617,33 @@
       }
       refreshImages();
 
-      // Кнопки формы
-      page.querySelector('#cancel').onclick = ()=> { document.body.classList.remove('editing'); document.getElementById('detail').style.display='none'; document.getElementById('feed').style.display=''; location.hash=''; };
+      page.querySelector('#cancel').onclick = ()=> history.back();
+
       if (n?.id){
         page.querySelector('#delete').onclick = async ()=>{
           if (!confirm('Delete this note?')) return;
           const { error } = await supabase.from('notes').delete().eq('id', n.id);
-          if (error) return alert(error.message);
-          toast('Deleted.'); await loadFeed();
-          document.body.classList.remove('editing'); document.getElementById('detail').style.display='none'; document.getElementById('feed').style.display='';
+          if (error) return alert('Delete error: ' + error.message);
+          toast('Deleted.');
+          await loadFeed();
+          history.back();
         };
       }
-      page.querySelector('#save').onclick = async ()=>{
-        const issue = parseInt(page.querySelector('#f-issue').value,10);
-        if (!(issue>=0)) return alert('Issue is required (integer).');
 
+      page.querySelector('#save').onclick = async (ev)=>{
+        const btn = ev.currentTarget;
+        btn.disabled = true; btn.textContent = isEdit ? 'Saving…' : 'Adding…';
+
+        const issue = parseInt(page.querySelector('#f-issue').value,10);
+        if (!(issue>=0)){ btn.disabled=false; btn.textContent=isEdit?'Save':'Add'; return alert('Issue is required (integer).'); }
+
+        const series = valOrNull('#f-series', page);
         const yearVal = page.querySelector('#f-year').value.trim();
         const year = yearVal ? parseInt(yearVal,10) : null;
 
         const title = valOrNull('#f-title', page);
-        const people = (page.querySelector('#f-people').value || '').split(';').map(s=>s.trim()).filter(Boolean);
-        const artist = people[0] || null;
-        const writer = people[1] || null;
+        const artist = valOrNull('#f-artist', page);
+        const writer = valOrNull('#f-writer', page);
         const summary = valOrNull('#f-summary', page);
 
         const tagsRaw = page.querySelector('#f-tags').value || '';
@@ -527,29 +651,36 @@
         const link_a = valOrNull('#f-linka', page);
         const link_b = valOrNull('#f-linkb', page);
 
-        const payload = { issue, year, title, artist, writer, summary, tags, link_a, link_b, images };
+        const payload = { series, issue, year, title, artist, writer, summary, tags, link_a, link_b, images };
 
-        let error;
-        if (n?.id){
-          ({ error } = await supabase.from('notes').update(payload).eq('id', n.id));
-        } else {
-          const uid = session?.user?.id || null;
-          ({ error } = await supabase.from('notes').insert({ ...payload, user_id: uid }));
+        try{
+          if (n?.id){
+            const { error } = await supabase.from('notes').update(payload).eq('id', n.id);
+            if (error) throw error;
+            toast('Saved.');
+          } else {
+            const uid = session?.user?.id || null;
+            const { error } = await supabase.from('notes').insert({ ...payload, user_id: uid });
+            if (error) throw error;
+            toast('Added.');
+          }
+          await loadFeed();
+          history.back(); // go back to previous page
+        }catch(err){
+          alert('Save error: ' + err.message);
+        }finally{
+          btn.disabled = false; btn.textContent = isEdit ? 'Save' : 'Add';
         }
-        if (error) return alert(error.message);
-        toast('Saved.');
-        await loadFeed();
-        document.body.classList.remove('editing'); document.getElementById('detail').style.display='none'; document.getElementById('feed').style.display='';
       };
 
-      // Добавить URL
+      // Add URL
       page.querySelector('#btn-add-url').onclick = ()=>{
         const url = prompt('Paste image URL (Cloudinary or direct):');
         if (!url) return;
         images.push(url.trim()); refreshImages();
       };
 
-      // Загрузка файла → Cloudinary unsigned
+      // Upload file → Cloudinary unsigned
       page.querySelector('#btn-upload').onclick = async ()=>{
         const fi = document.createElement('input'); fi.type='file'; fi.accept="image/*"; fi.multiple=true;
         fi.onchange = async ()=>{
@@ -571,6 +702,7 @@
       };
 
       document.getElementById('detail').appendChild(page);
+      routeTo(isEdit ? `#/edit/${n.id}` : '#/edit/new');
     }
 
     function valOrNull(sel, root=document){ const v=root.querySelector(sel)?.value.trim(); return v? v:null; }
@@ -595,7 +727,7 @@
       let el = document.getElementById('toast');
       if (!el){
         el = document.createElement('div'); el.id='toast';
-        el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 14px;border-radius:10px;background:rgba(0,0,0,.8);color:#fff;z-index:100';
+        el.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 14px;border-radius:10px;background:rgba(0,0,0,.8);color:#fff;z-index:100;transform:translateX(-50%)';
         document.body.appendChild(el);
       }
       el.textContent = msg;
