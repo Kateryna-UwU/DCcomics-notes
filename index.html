@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -20,18 +20,13 @@
     .topbar{display:flex;gap:10px;align-items:center}
     .brand{font-weight:700;letter-spacing:.5px}
     .search{flex:1;display:flex;gap:8px}
-    .search input{
-      width:100%;padding:12px 14px;border-radius:999px;border:1px solid #202127;background:#0f0f12;color:var(--ink)
-    }
+    .search input{width:100%;padding:12px 14px;border-radius:999px;border:1px solid #202127;background:#0f0f12;color:var(--ink)}
     .filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .chip{padding:6px 10px;border-radius:999px;background:#1a1b20;border:1px solid #2a2b31;color:var(--muted);cursor:pointer}
     .chip.active{color:#e9edff;border-color:var(--accent-2)}
     main{display:grid;gap:var(--gap);margin-top:var(--gap)}
     .card{display:grid;grid-template-columns:80px 1fr;gap:12px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
-    .thumb{
-      width:100%;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#0f0f12;display:flex;align-items:center;justify-content:center;
-      border:1px solid #24252b; cursor:pointer
-    }
+    .thumb{width:100%;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#0f0f12;display:flex;align-items:center;justify-content:center;border:1px solid #24252b; cursor:pointer}
     .thumb img{width:100%;height:100%;object-fit:cover;display:block}
     .meta{display:flex;flex-direction:column;gap:6px;min-width:0}
     .line1{display:flex; gap:8px; align-items:center; min-width:0}
@@ -70,24 +65,28 @@
     .viewer.active{display:flex}
     .viewer img{max-width:96vw;max-height:92vh;display:block;border-radius:12px}
 
-    .authbar{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.9rem}
+    .authbar{display:flex;align-items:center;gap:10px;color:#b9bfd3;font-size:.9rem}
 
     @media (max-width:560px){ .card{grid-template-columns:64px 1fr} }
   </style>
 </head>
 <body>
   <header class="wrap">
-    <div class="authbar" id="authbar">
-  <span id="auth-status">Гость</span>
-  <form id="auth-form" style="display:flex;gap:6px; align-items:center;">
-    <input id="auth-email" type="email" placeholder="email" style="width:160px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
-    <input id="auth-pass" type="password" placeholder="пароль" style="width:120px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
-    <button type="submit" class="btn ghost" id="btn-auth">Sign in</button>
-    <button type="button" class="btn ghost" id="btn-signup">Sign up</button>
-    <button type="button" class="btn ghost" id="btn-reset">Reset</button>
-    <button type="button" class="btn ghost" id="btn-logout" style="display:none">Log out</button>
-  </form>
-</div>
+    <div class="topbar">
+      <div class="brand">DC Notes</div>
+      <div class="search"><input id="q" placeholder="Поиск: title / artist / writer / tag / issue"></div>
+
+      <div class="authbar" id="authbar">
+        <span id="auth-status">Гость</span>
+        <form id="auth-form" style="display:flex;gap:6px; align-items:center;">
+          <input id="auth-email" type="email" placeholder="email" style="width:160px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
+          <input id="auth-pass" type="password" placeholder="пароль" style="width:120px;padding:6px 8px;border-radius:8px;border:1px solid #222;background:#0f1014;color:#eaeaf0">
+          <button type="submit" class="btn ghost" id="btn-auth">Sign in</button>
+          <button type="button" class="btn ghost" id="btn-signup">Sign up</button>
+          <button type="button" class="btn ghost" id="btn-reset">Reset</button>
+          <button type="button" class="btn ghost" id="btn-logout" style="display:none">Log out</button>
+        </form>
+      </div>
     </div>
     <div class="filters" id="filters"></div>
   </header>
@@ -100,18 +99,17 @@
   <div class="viewer" id="viewer" title="Tap to close"><img alt=""></div>
 
   <script type="module">
-    /**************** CONFIG (значения подставь свои) ****************/
+    /*************** CONFIG — ЗАМЕНИ на свои значения ***************/
     const CONFIG = {
-      SUPABASE_URL: "https://cirfsglvfhdznbccqzcc.supabase.co",
-      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpcmZzZ2x2Zmhkem5iY2NxemNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzUzOTgsImV4cCI6MjA3MzE1MTM5OH0.Bhzo0H_BJqoVF4DfhTSv1CzIYTDavIu01CuCbSlsfqk",
-      OWNER_EMAIL: "katrineord@gmail.com", // только этот email может редактировать
-      CLOUDINARY_CLOUD_NAME: "dm3zv8da4",
-      CLOUDINARY_UNSIGNED_PRESET: "DC-comics",
-      CLOUDINARY_FOLDER: "dc"
+      SUPABASE_URL: "https://cirfsglvfhdznbccqzcc.supabase.co",          // ← твой Project URL
+      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpcmZzZ2x2Zmhkem5iY2NxemNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NzUzOTgsImV4cCI6MjA3MzE1MTM5OH0.Bhzo0H_BJqoVF4DfhTSv1CzIYTDavIu01CuCbSlsfqk",               // ← твой anon key
+      OWNER_EMAIL: "katrineord@gmail.com",                            // ← твой email (только он сможет редактировать)
+      CLOUDINARY_CLOUD_NAME: "dm3zv8da4",                  // ← Cloudinary cloud name
+      CLOUDINARY_UNSIGNED_PRESET: "DC-comics",                   // ← имя unsigned пресета
+      CLOUDINARY_FOLDER: "dc"                                    // ← папка (по желанию)
     };
 
-    
-    /*************** Supabase (легковесная загрузка SDK) ***************/
+    /*************** Supabase SDK загрузка ***************/
     const sbScript = document.createElement('script');
     sbScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
     document.head.appendChild(sbScript);
@@ -119,154 +117,124 @@
 
     /***************** State *****************/
     let supabase, session = null, canEdit = false;
-    let allNotes = [];          // кэш для клиентского поиска/фильтра
+    let allNotes = [];          // кэш для поиска/фильтра
     let activeTag = null;
 
     async function init(){
       supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-wireAuthForm();
 
+      wireAuthForm(); // привязываем форму авторизации
+
+      // начальное состояние сессии
       const { data: { session: s } } = await supabase.auth.getSession();
       session = s;
       await refreshAuthUI();
 
+      // обновление при логине/логауте
       supabase.auth.onAuthStateChange(async (_event, newSession) => {
         session = newSession;
         await refreshAuthUI();
         await loadFeed();
       });
 
-      // Поиск, плюс, вьюер, логин/логаут
+      // UI: поиск, FAB, закрытие вьюера
       document.getElementById('q').addEventListener('input', filterFeed);
       document.getElementById('fab').addEventListener('click', () => openForm());
       document.getElementById('viewer').addEventListener('click', () => viewer(false));
-      document.getElementById('btn-login').addEventListener('click', loginFlow);
-      document.getElementById('btn-logout').addEventListener('click', async () => {
-        await supabase.auth.signOut(); location.hash = '';
-      });
 
       await loadFeed();
     }
 
     async function refreshAuthUI(){
       const authStatus = document.getElementById('auth-status');
-      const btnLogin = document.getElementById('btn-login');
       const btnLogout = document.getElementById('btn-logout');
+      const emailInput = document.getElementById('auth-email');
+      const passInput  = document.getElementById('auth-pass');
+
+      const { data: { session: s } } = await supabase.auth.getSession();
+      session = s;
 
       if (session?.user){
         authStatus.textContent = session.user.email;
-        btnLogin.style.display = 'none';
         btnLogout.style.display = '';
+        // прячем поля при залогиненном пользователе
+        emailInput.style.display = passInput.style.display = 'none';
+        document.getElementById('btn-auth').style.display = 'none';
+        document.getElementById('btn-signup').style.display = 'none';
+        document.getElementById('btn-reset').style.display = 'none';
         canEdit = (session.user.email === CONFIG.OWNER_EMAIL);
       } else {
-        authStatus.textContent = 'Guest';
-        btnLogin.style.display = '';
+        authStatus.textContent = 'Гость';
         btnLogout.style.display = 'none';
+        emailInput.style.display = passInput.style.display = '';
+        document.getElementById('btn-auth').style.display = '';
+        document.getElementById('btn-signup').style.display = '';
+        document.getElementById('btn-reset').style.display = '';
         canEdit = false;
       }
       document.body.classList.toggle('editing', false);
       document.getElementById('fab').style.display = canEdit ? '' : 'none';
     }
 
-    async function refreshAuthUI(){
-  const authStatus = document.getElementById('auth-status');
-  const btnLogout = document.getElementById('btn-logout');
-  const form = document.getElementById('auth-form');
-  const emailInput = document.getElementById('auth-email');
-  const passInput = document.getElementById('auth-pass');
+    // Auth helpers
+    async function signInPassword(email, password){
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return data;
+    }
+    async function signUpPassword(email, password){
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      return data;
+    }
+    async function resetPassword(email){
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.href });
+      if (error) throw error;
+    }
 
-  const { data: { session: s } } = await supabase.auth.getSession();
-  session = s;
+    function wireAuthForm(){
+      const form = document.getElementById('auth-form');
+      const email = document.getElementById('auth-email');
+      const pass  = document.getElementById('auth-pass');
+      const btnSignup = document.getElementById('btn-signup');
+      const btnReset  = document.getElementById('btn-reset');
+      const btnLogout = document.getElementById('btn-logout');
 
-  if (session?.user){
-    authStatus.textContent = session.user.email;
-    btnLogout.style.display = '';
-    // прячем поля при залогиненном пользователе
-    emailInput.style.display = passInput.style.display = 'none';
-    document.getElementById('btn-auth').style.display = 'none';
-    document.getElementById('btn-signup').style.display = 'none';
-    document.getElementById('btn-reset').style.display = 'none';
-    canEdit = (session.user.email === CONFIG.OWNER_EMAIL);
-  } else {
-    authStatus.textContent = 'Гость';
-    btnLogout.style.display = 'none';
-    emailInput.style.display = passInput.style.display = '';
-    document.getElementById('btn-auth').style.display = '';
-    document.getElementById('btn-signup').style.display = '';
-    document.getElementById('btn-reset').style.display = '';
-    canEdit = false;
-  }
-  document.body.classList.toggle('editing', false);
-  document.getElementById('fab').style.display = canEdit ? '' : 'none';
-}
+      form.addEventListener('submit', async (e)=>{ // Sign in
+        e.preventDefault();
+        try{
+          await signInPassword(email.value.trim(), pass.value);
+          toast('Вход выполнен');
+          await refreshAuthUI(); await loadFeed();
+        } catch(err){ alert('Ошибка входа: ' + err.message); }
+      });
 
-// заменяем прошлую magic-link логику:
-async function signInPassword(email, password){
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data;
-}
+      btnSignup.addEventListener('click', async ()=>{
+        try{
+          if (!email.value || !pass.value) return alert('Укажи email и пароль');
+          await signUpPassword(email.value.trim(), pass.value);
+          toast('Аккаунт создан, ты вошёл.');
+          await refreshAuthUI(); await loadFeed();
+        } catch(err){ alert('Ошибка регистрации: ' + err.message); }
+      });
 
-async function signUpPassword(email, password){
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) throw error;
-  return data;
-}
+      btnReset.addEventListener('click', async ()=>{
+        try{
+          if (!email.value) return alert('Введи email');
+          await resetPassword(email.value.trim());
+          alert('Отправили письмо для смены пароля.');
+        } catch(err){ alert('Ошибка: ' + err.message); }
+      });
 
-async function resetPassword(email){
-  // отправит письмо для смены пароля (работает, если Site URL настроен)
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: location.href
-  });
-  if (error) throw error;
-}
-
-function wireAuthForm(){
-  const form = document.getElementById('auth-form');
-  const email = document.getElementById('auth-email');
-  const pass = document.getElementById('auth-pass');
-  const btnAuth = document.getElementById('btn-auth');
-  const btnSignup = document.getElementById('btn-signup');
-  const btnReset = document.getElementById('btn-reset');
-  const btnLogout = document.getElementById('btn-logout');
-
-  form.addEventListener('submit', async (e)=>{ // Sign in
-    e.preventDefault();
-    try{
-      await signInPassword(email.value.trim(), pass.value);
-      toast('Вход выполнен');
-      await refreshAuthUI(); await loadFeed();
-    } catch(err){ alert('Ошибка входа: ' + err.message); }
-  });
-
-  btnSignup.addEventListener('click', async ()=>{
-    try{
-      if (!email.value || !pass.value) return alert('Укажи email и пароль');
-      await signUpPassword(email.value.trim(), pass.value);
-      toast('Аккаунт создан, ты вошёл.');
-      await refreshAuthUI(); await loadFeed();
-    } catch(err){ alert('Ошибка регистрации: ' + err.message); }
-  });
-
-  btnReset.addEventListener('click', async ()=>{
-    try{
-      if (!email.value) return alert('Введи email');
-      await resetPassword(email.value.trim());
-      alert('Отправили письмо для смены пароля.');
-    } catch(err){ alert('Ошибка: ' + err.message); }
-  });
-
-  btnLogout.addEventListener('click', async ()=>{
-    await supabase.auth.signOut();
-    toast('Выход выполнен');
-    await refreshAuthUI(); await loadFeed();
-  });
-}
-
+      btnLogout.addEventListener('click', async ()=>{
+        await supabase.auth.signOut();
+        toast('Выход выполнен');
+        await refreshAuthUI(); await loadFeed();
+      });
+    }
 
     /*************** Data: Feed ***************/
     async function loadFeed(){
-      // Грузим все, сортируем по issue (возрастание)
       const { data, error } = await supabase
         .from('notes')
         .select('*')
@@ -282,7 +250,7 @@ function wireAuthForm(){
       const feed = document.getElementById('feed');
       feed.innerHTML = '';
       if (!list.length){
-        feed.innerHTML = `<div class="empty">Nothing here yet. Tap “+” to add your first issue.</div>`;
+        feed.innerHTML = `<div class="empty">Пока пусто. Нажми «+», чтобы добавить первый выпуск.</div>`;
         return;
       }
       for (const n of list){
@@ -299,7 +267,7 @@ function wireAuthForm(){
           img.alt = n.title || ('#'+n.issue);
           img.addEventListener('click', (e)=>{ e.stopPropagation(); viewer(true, firstImg); });
           thumb.appendChild(img);
-        } // иначе — без заглушки
+        }
         el.appendChild(thumb);
 
         const meta = document.createElement('div'); meta.className = 'meta';
@@ -344,7 +312,7 @@ function wireAuthForm(){
       if (!allTags.size) return;
       const reset = document.createElement('div');
       reset.className = 'chip' + (activeTag? '' : ' active');
-      reset.textContent = 'All';
+      reset.textContent = 'Все';
       reset.addEventListener('click', ()=>{ activeTag=null; filterFeed(); });
       f.appendChild(reset);
 
@@ -416,7 +384,7 @@ function wireAuthForm(){
         </div>
       `;
 
-      // Изображения (по тапу — полноэкранный просмотр)
+      // Images
       const imgs = document.createElement('div'); imgs.className = 'row'; imgs.innerHTML = `<label>Images</label>`;
       const grid = document.createElement('div'); grid.className = 'grid-imgs';
       (n.images||[]).forEach(url=>{
@@ -430,7 +398,7 @@ function wireAuthForm(){
       page.appendChild(imgs);
 
       const btns = document.createElement('div'); btns.className = 'btns';
-      btns.innerHTML = `<button class="btn" id="back">← Back</button>`;
+      btns.innerHTML = `<button class="btn" id="back">← Назад</button>`;
       if (canEdit) btns.innerHTML += `<button class="btn primary" id="edit">Edit</button>`;
       page.appendChild(btns);
 
@@ -614,14 +582,14 @@ function wireAuthForm(){
       if (show){ im.src = url; v.classList.add('active'); }
       else { im.src=''; v.classList.remove('active'); }
     }
-    function thumbUrl(url){ return url; } // сюда можно добавить трансформации Cloudinary
+    function thumbUrl(url){ return url; }
 
     /*************** Utils ***************/
     function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
     function escapeAttr(s){ return escapeHtml(s); }
     function nl2br(s){ return s.replace(/\n/g,'<br>'); }
 
-    // Маленький тост (5 сек)
+    // Toast
     let toastTimer;
     function toast(msg){
       let el = document.getElementById('toast');
